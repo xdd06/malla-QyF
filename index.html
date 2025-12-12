@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Malla Curricular — Química y Farmacia (Interactiva)</title>
+<style>
+  :root{
+    --bg:#fbfafc;
+    --card:#fff;
+    --accent1:#ffd7e8; /* rosa pastel */
+    --accent2:#dff7ea; /* verde pastel */
+    --muted:#9aa0a6;
+    --text:#223;
+    --ok:#4b9072;
+    --danger:#d9534f;
+    --shadow: 0 6px 18px rgba(34,34,34,0.06);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  body{
+    margin:0;
+    background:linear-gradient(180deg, #fffafa 0%, #f7fff9 100%);
+    color:var(--text);
+    padding:28px;
+  }
+  header{
+    display:flex;
+    gap:16px;
+    align-items:center;
+    margin-bottom:18px;
+  }
+  h1{font-size:20px;margin:0}
+  .subtitle{color:var(--muted); font-size:13px}
+  .controls{margin-left:auto; display:flex; gap:8px; align-items:center}
+  button, .btn{
+    background:transparent;
+    border:1px solid rgba(34,34,34,0.06);
+    padding:8px 12px;
+    border-radius:10px;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    font-size:13px;
+  }
+  .btn-primary{
+    background:linear-gradient(90deg,var(--accent2),var(--accent1));
+    border:none;
+    color:var(--text);
+    font-weight:600;
+  }
+  .container{
+    display:flex;
+    gap:16px;
+    align-items:flex-start;
+  }
+  .malla{
+    display:grid;
+    grid-auto-flow:column;
+    gap:14px;
+    align-items:start;
+  }
+  .semester{
+    width:220px;
+    background:var(--card);
+    border-radius:12px;
+    padding:12px;
+    box-shadow:var(--shadow);
+    min-height:120px;
+  }
+  .semester h3{
+    margin:0 0 8px 0;
+    font-size:14px;
+  }
+  .subject{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px;
+    margin-bottom:8px;
+    border-radius:10px;
+    user-select:none;
+    transition:transform .12s ease, box-shadow .12s ease;
+    position:relative;
+  }
+  .subject:hover{ transform: translateY(-2px); box-shadow: 0 8px 20px rgba(34,34,34,0.06); }
+  .subject .dot{
+    width:14px;height:14px;border-radius:4px;background:linear-gradient(180deg,#fff,#f3f3f3); border:2px solid rgba(34,34,34,0.06);
+    display:inline-block; flex-shrink:0;
+  }
+  .subject .title{font-size:13px; flex:1}
+  .subject.completed{
+    background:linear-gradient(90deg,#eefaf4,#fff);
+    border-left:4px solid var(--ok);
+  }
+  .subject.blocked{
+    opacity:0.48;
+    pointer-events:none;
+    filter:grayscale(.02);
+    background:linear-gradient(90deg,#fff7f9,#fbfff8);
+    border-left:4px solid rgba(0,0,0,0.04);
+  }
+  .chip{
+    font-size:11px;padding:4px 6px;border-radius:999px;border:1px solid rgba(34,34,34,0.04);
+  }
+  .tooltip {
+    position:absolute;
+    left:calc(100% + 8px);
+    top:50%;
+    transform:translateY(-50%);
+    background:#fff;
+    border-radius:8px;
+    padding:8px 10px;
+    box-shadow: 0 10px 30px rgba(34,34,34,0.08);
+    font-size:12px;
+    min-width:160px;
+    display:none;
+    z-index:30;
+  }
+  .subject.blocked:hover .tooltip{ display:block; }
+  .tooltip small{ color:var(--muted); display:block; margin-top:6px; font-size:11px; }
+  .legend{
+    width:220px;
+    background:var(--card);
+    padding:12px;border-radius:12px;box-shadow:var(--shadow);
+    font-size:13px;
+  }
+  .progressBar{
+    height:10px;border-radius:8px;background:#f0f3f2;overflow:hidden;margin-top:8px;
+  }
+  .progressFill{ height:100%; background:linear-gradient(90deg,#ffd7e8,#dff7ea); width:0%;}
+  footer{margin-top:14px;color:var(--muted); font-size:12px}
+  .small{font-size:12px;color:var(--muted)}
+  .actions{display:flex;gap:8px;margin-top:8px}
+  input[type="file"]{display:none}
+  .import-btn{display:inline-flex;align-items:center;gap:8px}
+  /* Responsive */
+  @media (max-width:900px){
+    .container{flex-direction:column}
+    .malla{overflow:auto; padding-bottom:8px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Malla Interactiva — Química y Farmacia (ejemplo)</h1>
+    <div class="subtitle">Haz clic en una asignatura para marcarla como aprobada. Las materias con prerequisitos se desbloquean automáticamente.</div>
+  </div>
+  <div class="controls">
+    <button id="resetBtn" title="Reiniciar progreso">Reiniciar</button>
+    <button id="exportBtn" class="btn">Exportar (JSON)</button>
+    <label class="btn import-btn">
+      <span id="importLabel">Importar</span>
+      <input id="fileInput" type="file" accept="application/json">
+    </label>
+  </div>
+</header>
+
+<div class="container">
+  <div id="malla" class="malla" aria-live="polite"></div>
+
+  <aside class="legend" aria-hidden="false">
+    <strong>Leyenda</strong>
+    <div style="margin-top:8px">
+      <div style="display:flex;gap:8px;align-items:center"><div style="width:12px;height:12px;border-radius:3px;background:linear-gradient(90deg,#fffefb,#e7fff2);border-left:4px solid var(--ok)"></div> <div class="small">Aprobada</div></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><div style="width:12px;height:12px;border-radius:3px;background:#fff7f9;border-left:4px solid rgba(0,0,0,0.04)"></div> <div class="small">Bloqueada (faltan prerequisitos)</div></div>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="small">Progreso general</div>
+      <div class="progressBar"><div id="progressFill" class="progressFill"></div></div>
+      <div class="small" style="margin-top:6px" id="progressText">0 / 0 asignaturas aprobadas</div>
+    </div>
+
+    <div class="actions">
+      <button id="selectAllBtn" class="btn">Marcar todas</button>
+      <button id="clearAllBtn" class="btn">Desmarcar todas</button>
+    </div>
+
+    <footer>
+      <div class="small">Puedes editar la lista de asignaturas en el script (variable <code>subjects</code>).</div>
+    </footer>
+  </aside>
+</div>
+
+<script>
+/*
+  ESTRUCTURA DE DATOS:
+  Cada asignatura: { id: 'QG1', name: 'Química General I', sem: 1, prereqs: ['M1'] }
+  - id: identificador único (sin espacios)
+  - name: nombre mostrado
+  - sem: número de semestre (columna)
+  - prereqs: array de ids que deben estar aprobadas para desbloquear la materia
+*/
+
+/* ======= Aquí puedes editar la malla: sustituye/añade asignaturas según necesites ======= */
+const subjects = [
+  { id:'M1',  name:'Matemáticas I', sem:1, prereqs:[] },
+  { id:'QG1', name:'Química General I', sem:1, prereqs:[] },
+  { id:'F1',  name:'Física I', sem:1, prereqs:[] },
+  { id:'B1',  name:'Biología Celular', sem:1, prereqs:[] },
+
+  { id:'M2',  name:'Matemáticas II', sem:2, prereqs:['M1'] },
+  { id:'QG2', name:'Química General II', sem:2, prereqs:['QG1'] },
+  { id:'F2',  name:'Física II', sem:2, prereqs:['F1'] },
+  { id:'L1',  name:'Laboratorio General I', sem:2, prereqs:['QG1'] },
+
+  { id:'QO1', name:'Química Orgánica I', sem:3, prereqs:['QG2'] },
+  { id:'IA',  name:'Instrumentación Analítica', sem:3, prereqs:['QG2'] },
+  { id:'S1',  name:'Bioquímica I', sem:3, prereqs:['B1','QG2'] },
+
+  { id:'QO2', name:'Química Orgánica II', sem:4, prereqs:['QO1'] },
+  { id:'S2',  name:'Bioquímica II', sem:4, prereqs:['S1'] },
+  { id:'FQ',  name:'Físico-Química', sem:4, prereqs:['M2','QG2'] },
+
+  { id:'FAR1',name:'Farmacognosia', sem:5, prereqs:['QO2','S2'] },
+  { id:'TOX', name:'Toxicología', sem:5, prereqs:['S2'] },
+  { id:'PD',  name:'Diseño de Formas Farmacéuticas', sem:5, prereqs:['IA'] },
+
+  { id:'FAR2',name:'Farmacología I', sem:6, prereqs:['FAR1','TOX'] },
+  { id:'QC',  name:'Control de Calidad', sem:6, prereqs:['IA','FQ'] },
+
+  { id:'PRAC',name:'Práctica Profesional', sem:10, prereqs:['FAR2','QC'] }
+];
+/* ======= Fin de la edición de malla ======= */
+
+const STORAGE_KEY = 'malla_qf_ubb_v1';
+let state = {}; // { 'QG1': true, ... }
+
+// Inicialización
+function init(){
+  // cargar estado guardado
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if(saved){
+    try{ state = JSON.parse(saved); } catch(e){ state = {}; }
+  }
+  render();
+  attachActions();
+  updateProgressUI();
+}
+
+// Construir semestres dinámicamente según los datos
+function getSemesters(){
+  const s = Array.from(new Set(subjects.map(x=>x.sem))).sort((a,b)=>a-b);
+  return s;
+}
+
+function buildSubjectElement(sub){
+  const el = document.createElement('div');
+  el.className = 'subject';
+  el.dataset.id = sub.id;
+
+  const dot = document.createElement('div'); dot.className='dot';
+  const title = document.createElement('div'); title.className='title';
+  title.textContent = sub.name;
+  const chip = document.createElement('div'); chip.className='chip'; chip.textContent = sub.id;
+
+  // tooltip for blocked subjects
+  const tooltip = document.createElement('div'); tooltip.className='tooltip';
+  tooltip.innerHTML = `<strong>Bloqueada</strong><small id="missing-${sub.id}"></small>`;
+
+  el.appendChild(dot);
+  el.appendChild(title);
+  el.appendChild(chip);
+  el.appendChild(tooltip);
+
+  // Determine blocked/completed
+  const missing = missingPrereqs(sub);
+  if(missing.length > 0){
+    el.classList.add('blocked');
+    tooltip.querySelector('small').textContent = 'Faltan: ' + missing.join(', ');
+  } else {
+    // clickable
+    el.addEventListener('click', ()=> toggleComplete(sub.id));
+  }
+
+  if(state[sub.id]){
+    el.classList.add('completed');
+  }
+
+  return el;
+}
+
+function missingPrereqs(sub){
+  if(!sub.prereqs || sub.prereqs.length === 0) return [];
+  return sub.prereqs.filter(pid => !state[pid]);
+}
+
+function render(){
+  const container = document.getElementById('malla');
+  container.innerHTML = '';
+  const semesters = getSemesters();
+  const maxSem = Math.max(...semesters);
+
+  for(const sem of semesters){
+    const col = document.createElement('div');
+    col.className = 'semester';
+    col.setAttribute('data-sem', sem);
+    const h = document.createElement('h3');
+    h.textContent = `Semestre ${sem}`;
+    col.appendChild(h);
+
+    const list = subjects.filter(s=>s.sem===sem).sort((a,b)=>a.name.localeCompare(b.name));
+    if(list.length === 0){
+      const empty = document.createElement('div'); empty.className='small'; empty.textContent = 'Sin asignaturas';
+      col.appendChild(empty);
+    } else {
+      for(const sub of list){
+        col.appendChild(buildSubjectElement(sub));
+      }
+    }
+    container.appendChild(col);
+  }
+  // update event listeners for newly rendered elements done via buildSubjectElement
+  updateProgressUI();
+  persistState();
+}
+
+// Alternar completado
+function toggleComplete(id){
+  state[id] = !state[id];
+  // Si desmarcamos, también desmarcar aquellas que dependen de esta materia (en cascada)
+  if(!state[id]){
+    cascadeUnmark(id);
+  }
+  render();
+}
+
+// si una materia se desmarca, desmarcar dependientes que requieren de ella
+function cascadeUnmark(id){
+  // buscar asignaturas que tengan id en prereqs y estén marcadas
+  const dependents = subjects.filter(s=> s.prereqs.includes(id));
+  for(const dep of dependents){
+    if(state[dep.id]){
+      delete state[dep.id];
+      cascadeUnmark(dep.id);
+    }
+  }
+}
+
+// Guardar en localStorage
+function persistState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){
+    console.warn('No se pudo guardar en localStorage', e);
+  }
+}
+
+// Control de botones
+function attachActions(){
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    if(confirm('¿Seguro que quieres reiniciar el progreso?')) {
+      state = {};
+      persistState();
+      render();
+    }
+  });
+
+  document.getElementById('selectAllBtn').addEventListener('click', ()=>{
+    for(const s of subjects){
+      // solo marcar si no está bloqueada por prereqs
+      if(missingPrereqs(s).length === 0) state[s.id] = true;
+    }
+    persistState(); render();
+  });
+
+  document.getElementById('clearAllBtn').addEventListener('click', ()=>{
+    for(const s of subjects) delete state[s.id];
+    persistState(); render();
+  });
+
+  // Exportar
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    const data = { date: new Date().toISOString(), state, subjects };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'malla_progreso.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  // Importar
+  const fileInput = document.getElementById('fileInput');
+  const importLabel = document.getElementById('importLabel');
+  fileInput.addEventListener('change', (ev)=>{
+    const f = ev.target.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if(parsed && parsed.state){
+          if(confirm('Se importará el progreso desde el archivo. Reemplazar el progreso actual?')){
+            state = parsed.state;
+            persistState();
+            render();
+            importLabel.textContent = 'Importado ✓';
+            setTimeout(()=> importLabel.textContent = 'Importar', 1800);
+          }
+        } else {
+          alert('Formato de archivo no válido (se requiere campo "state").');
+        }
+      } catch(err){
+        alert('Error al leer el archivo: ' + err.message);
+      }
+    };
+    reader.readAsText(f);
+    fileInput.value = '';
+  });
+
+  // También actualizar periodicamenete el progreso (por si hay cambios desde otra pestaña)
+  window.addEventListener('storage', (e)=>{
+    if(e.key === STORAGE_KEY){
+      try{ state = JSON.parse(e.newValue || '{}'); } catch(e){ state = {}; }
+      render();
+    }
+  });
+}
+
+// Actualiza barra de progreso y texto
+function updateProgressUI(){
+  const total = subjects.length;
+  const aprobadas = Object.keys(state).filter(k=> state[k] && subjects.some(s=>s.id===k)).length;
+  const pct = total ? Math.round((aprobadas/total)*100) : 0;
+  const fill = document.getElementById('progressFill');
+  const txt = document.getElementById('progressText');
+  if(fill) fill.style.width = pct + '%';
+  if(txt) txt.textContent = `${aprobadas} / ${total} asignaturas aprobadas (${pct}%)`;
+}
+
+// Inicializar al cargar la página
+init();
+</script>
+</body>
+</html>
