@@ -142,23 +142,19 @@
   <div class="wrap">
     <header>
       <h1>Química y Farmacia — Malla Interactiva (UBB)</h1>
-      <p>Haz clic en una asignatura para marcarla como aprobada. Las materias con prerrequisitos se desbloquean automáticamente.</p>
-    </header>
-
+      
     <div class="banner" role="banner">
       <div>
-        <div class="title">LICENCIATURA EN QUÍMICA Y FARMACIA</div>
+        <div class="title">CARRERA QUÍMICA Y FARMACIA</div>
         <div class="subtitle">Malla interactiva — Universidad del Bío-Bío</div>
       </div>
-      <div class="subtitle">Progreso guardado localmente</div>
-    </div>
 
     <!-- Controles -->
     <div class="controls" role="region" aria-label="Controles de malla">
       <button id="resetBtn" class="btn" title="Reiniciar progreso">Reiniciar</button>
       <button id="selectAllBtn" class="btn">Marcar disponibles</button>
       <button id="clearAllBtn" class="btn">Desmarcar todo</button>
-      <button id="exportBtn" class="btn">Exportar progreso (JSON)</button>
+      <button id="exportBtn" class="btn">Exportar progreso </button>
       <label class="btn" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
         Importar
         <input id="fileInput" type="file" accept="application/json" style="display:none">
@@ -193,32 +189,77 @@
 
 /* --- MALLA (puedes editar esta lista) --- */
 const subjects = [
-  { id:'M1',  name:'Matemáticas I', sem:1, prereqs:[] },
-  { id:'QG1', name:'Química General I', sem:1, prereqs:[] },
-  { id:'F1',  name:'Física I', sem:1, prereqs:[] },
-  { id:'B1',  name:'Biología Celular', sem:1, prereqs:[] },
+  { name:'Introducción a la Farmacia ', prereqs:[] },
+  { name:'Álgebra y Trigonometría', prereqs:[] },
+  { name:'Química General I', prereqs:[] },
+  { name:'Biología General', prereqs:[] },
+  { name:'Física Aplicada', prereqs:[] },
+  { name:'Formación Integral', prereqs:[] },
+  
+  { name:'Ética Farmaceutica', prereqs:['Introducción a la Farmacia'] },
+  { name:'Cálculo Diferencial e Integral', prereqs:['Álgebra y Trigonometría'] },
+  { name:'Química General II', prereqs:['Química General I'] },
+  { name:'Fisicoquímica', prereqs:['Física Aplicada'] },
+  { name:'Formación Integral', prereqs:[] },
 
-  { id:'M2',  name:'Matemáticas II', sem:2, prereqs:['M1'] },
-  { id:'QG2', name:'Química General II', sem:2, prereqs:['QG1'] },
-  { id:'F2',  name:'Física II', sem:2, prereqs:['F1'] },
-  { id:'L1',  name:'Laboratorio General I', sem:2, prereqs:['QG1'] },
+  { name:'Faramcia y Sociedad', prereqs:['Ética Farmaceutica'] },
+  { name:'Química Analitica', prereqs:['Cálculo Diferencial e Integral', 'Química General II'] },
+  { name:'Química Orgánica I',  prereqs:['Química General II'] },
+  { name:'Biologia Molecular', prereqs:['Bioquímica'] },
+  { name:'Histología', prereqs:['B1','Biología General'] },
+  { name:'Ingles Comunicacional I', prereqs:[] },
 
-  { id:'QO1', name:'Química Orgánica I', sem:3, prereqs:['QG2'] },
-  { id:'IA',  name:'Instrumentación Analítica', sem:3, prereqs:['QG2'] },
-  { id:'S1',  name:'Bioquímica I', sem:3, prereqs:['B1','QG2'] },
+  { name:'Analisis Instrumental', prereqs:['Química Analitica'] },
+  { name:'Estadistica', prereqs:['Álgebra y Trigonometría'] },
+  { name:'Química Orgánica II', prereqs:['Química Orgánica I'] },
+  { name:'Fisiología I', prereqs:['Química Orgánica I'] },
+  { name:'Ingles Comunicacional II', prereqs:['Ingles Comunicacional I'] },
+  { name:'Formación Integral', prereqs:[] },
 
-  { id:'QO2', name:'Química Orgánica II', sem:4, prereqs:['QO1'] },
-  { id:'S2',  name:'Bioquímica II', sem:4, prereqs:['S1'] },
-  { id:'FQ',  name:'Físico-Química', sem:4, prereqs:['M2','QG2'] },
+  { name:'Farmacología Básica: Fitoterapia', prereqs:['Analisis Instrumental'] },
+  { name:'Control de Calidad Y Análisis Farmaceutico', prereqs:['Analisis Instrumental','Química Orgánica II'] },
+  { name:'Salud Pública', prereqs:['Estadistica'] },
+  { name:'Fisiología II', prereqs:['Fisiología I','Biologia Molecular'] },
+  { name:'Ingles Comunicacional III', prereqs:['Ingles Comunicacional II'] },
 
-  { id:'FAR1',name:'Farmacognosia', sem:5, prereqs:['QO2','S2'] },
-  { id:'TOX', name:'Toxicología', sem:5, prereqs:['S2'] },
-  { id:'PD',  name:'Diseño de Formas Farmacéuticas', sem:5, prereqs:['IA'] },
+  { name:'Farmacología Molecular I', prereqs:['Farmacología Básica: Fitoterapia'] },
+  { name:'Farmacoquímica I', prereqs:['Farmacología Básica: Fitoterapia','Química Orgánica II'] },
+  { name:'Investigación Farmacéutica', prereqs:['Farmacia y Sociedad'] },
+  { name:'Fisiopatología', prereqs:['Fisiología II'] },
+  { name:'Microbiología', prereqs:['Biologia Molecular','Histología','Fisiología II'] },
+  { name:'Ingles Comunicacional IV', prereqs:['Ingles Comunicacional III'] },
+  { name:'Práctica Farmacia Comunitaria', prereqs:['Farmacología Básica: Fitoterapia', 'Control de Calidad Y Análisis Farmaceutico', 'Salud Pública', 'Fisiología II'] },
 
-  { id:'FAR2',name:'Farmacología I', sem:6, prereqs:['FAR1','TOX'] },
-  { id:'QC',  name:'Control de Calidad', sem:6, prereqs:['IA','FQ'] },
+  { name:'Farmacología Molecular II', prereqs:['Farmacología Molecular I'] },
+  { name:'Farmacoquímica II', prereqs:['Farmacoquímica I'] },
+  { name:'Bioquimica Clinica', prereqs:['Fisiopatologia'] },
+  { name:'Fisiopatología', prereqs:['Fisiología II'] },
+  { name:'Tecnologia Farmaceutica I', prereqs:['Fisicoquimica'] },
+  { name:'Inmunologia Aplicada', prereqs:['Microbiologia'] },
+  { name:'Formacion Integral', prereqs:[] },
 
-  { id:'PRAC',name:'Práctica Profesional', sem:10, prereqs:['FAR2','QC'] }
+  { name:'Farmacología Clinica y Terapéutica de Sistemas I', prereqs:['Farmacología Molecular II'] },
+  { name:'Toxicología', prereqs:['Farmacología Molecular II'] },
+  { name:'Biofarmacia y Farmacocinetica', prereqs:['Tecnologia Farmaceutica I'] },
+  { name:'Fisiopatología', prereqs:['Fisiología II'] },
+  { name:'Tecnologia Farmaceutica II', prereqs:['Tecnologia Farmaceutica I'] },
+  { name:'Formacion Integral', prereqs:[] },
+  { name:'Práctica Farmacia Comunitaria Intermedia', prereqs:['Farmacología Molecular II', 'Farmacoquímica II', 'Bioquimica Clinica', 'Tecnologia Farmaceutica II', 'Inmunologia Aplicada'] },
+
+  { name:'Farmacología Clinica y Terapéutica de Sistemas II', prereqs:['Farmacología Clinica y Terapéutica de Sistemas I'] },
+  { name:'Bromatologia', prereqs:['Toxicología'] },
+  { name:'Farmacia Asistencial', prereqs:['Tecnologia Farmaceutica II'] },
+  { name:'Legislación Farmacéutica', prereqs:[] },
+  { name:'Administracipon y Gestión en Farmacia', prereqs:[] },
+  { name:'Terapia Celular y Terapia Génica', prereqs:['Farmacología Molecular II'] },
+  { name:'Farmacoterapia de Presición y Farmacogenomica', prereqs:['Farmacología Molecular II'] },
+
+  { name:'Electivo I', prereqs:['240 CST'] },
+  { name:'Electivo II', prereqs:['240 CST'] },
+  { name:'Práctica Farmacia Comunitaria Final', prereqs:['240 CST'] },
+
+  { name:'Actividad de Titulación', prereqs:['300 CST'] },
+
 ];
 /* --- FIN MALLA --- */
 
